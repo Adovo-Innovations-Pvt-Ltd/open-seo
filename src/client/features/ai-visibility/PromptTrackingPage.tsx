@@ -19,6 +19,7 @@ import {
   type AiTrackerState,
 } from "@/shared/ai-visibility";
 import type { AiTrackerPatch } from "@/types/schemas/ai-visibility";
+import { AiMarketSelector } from "./AiMarketSelector";
 import { PromptList } from "./PromptList";
 import { CompetitorsTab } from "./CompetitorsTab";
 import { CitationsTab } from "./CitationsTab";
@@ -37,6 +38,8 @@ import {
   aiVisibilityKey,
   useAiRunProgress,
   useAiVisibilityTracker,
+  useSelectedAiMarket,
+  aiTrackerQueryOptions,
 } from "./shared";
 import type { ProjectMarket } from "@/client/features/projects/types";
 import { DEFAULT_LOCATION_CODE } from "@/shared/keyword-locations";
@@ -76,6 +79,7 @@ export function PromptTrackingPage({
     );
   return (
     <PromptTrackingContent
+      key={query.data.tracker?.id ?? "new"}
       projectId={projectId}
       tab={tab}
       state={query.data}
@@ -99,6 +103,7 @@ function PromptTrackingContent({
   defaultMarket: ProjectMarket;
 }) {
   const queryClient = useQueryClient();
+  const selectedMarket = useSelectedAiMarket();
   const [editorMode, setEditorMode] = useState<TrackerEditorMode | null>(null);
   const [managingTracking, setManagingTracking] = useState(false);
   const [selectedRun, setSelectedRun] = useState<AiRun | null>(null);
@@ -113,7 +118,10 @@ function PromptTrackingContent({
     (prompt) => !prompt.archived && !prompt.paused,
   );
   const saved = (next: AiTrackerState, run?: AiRun, closeEditor = true) => {
-    queryClient.setQueryData([...aiVisibilityKey(projectId), "tracker"], next);
+    queryClient.setQueryData(
+      aiTrackerQueryOptions(projectId, selectedMarket).queryKey,
+      next,
+    );
     void queryClient.invalidateQueries({
       queryKey: aiVisibilityKey(projectId),
     });
@@ -126,7 +134,7 @@ function PromptTrackingContent({
   const pauseSchedule = useMutation({
     mutationFn: () =>
       setAiVisibilitySchedule({
-        data: { projectId, enabled: false },
+        data: { projectId, trackerId: tracker?.id, enabled: false },
       }),
     onSuccess: (result) => {
       saved(result.state);
@@ -137,7 +145,9 @@ function PromptTrackingContent({
   });
   const reduceTracking = useMutation({
     mutationFn: (patch: AiTrackerPatch) =>
-      saveAiVisibilityTracker({ data: { projectId, ...patch } }),
+      saveAiVisibilityTracker({
+        data: { projectId, trackerId: tracker?.id, ...patch },
+      }),
     onSuccess: (result) => saved(result.state),
     onError: (error) => toast.error(getStandardErrorMessage(error)),
   });
@@ -173,6 +183,7 @@ function PromptTrackingContent({
         title="Prompt Tracking"
         description="Track the prompts your customers use with AI. Inspect where your business is mentioned or cited."
       />
+      <AiMarketSelector projectId={projectId} state={state} />
       {!state.configured ? (
         <EmptyState
           variant="card"
@@ -239,7 +250,11 @@ function PromptTrackingContent({
                 )
               )}
             </div>
-            <VisibilityTrend projectId={projectId} collecting={busy} />
+            <VisibilityTrend
+              projectId={projectId}
+              trackerId={tracker?.id}
+              collecting={busy}
+            />
             <PromptTrackingTabs projectId={projectId} tab={tab} />
             {tab === "prompts" && (
               <PromptList

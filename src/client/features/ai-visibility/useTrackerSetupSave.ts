@@ -11,9 +11,11 @@ import type { TrackerSetupReviewData } from "./TrackerSetupReview";
 
 export function useTrackerSetupSave({
   projectId,
+  trackerId,
   onSaved,
 }: {
   projectId: string;
+  trackerId?: string;
   onSaved: (state: AiTrackerState, run?: AiRun) => void;
 }) {
   return useMutation({
@@ -25,20 +27,25 @@ export function useTrackerSetupSave({
       scheduleWeekly: boolean;
     }) => {
       const result = await saveAiVisibilityTracker({
-        data: { projectId, ...accepted.patch },
+        data: { projectId, trackerId, ...accepted.patch },
       });
       if (!scheduleWeekly) return { state: result.state };
       try {
         // A first schedule also collects a baseline now.
         const scheduled = await setAiVisibilitySchedule({
-          data: { projectId, enabled: true, scheduleInterval: "weekly" },
+          data: {
+            projectId,
+            trackerId: result.state.tracker?.id,
+            enabled: true,
+            scheduleInterval: "weekly",
+          },
         });
         return { state: scheduled.state, run: scheduled.run ?? undefined };
       } catch (scheduleError) {
         // The schedule is saved before its first check starts, so a failed
         // check can leave tracking on. Show what the server kept.
         const state = await getAiVisibilityTracker({
-          data: { projectId },
+          data: { projectId, trackerId: result.state.tracker?.id },
         }).catch(() => result.state);
         return { state, scheduleError };
       }

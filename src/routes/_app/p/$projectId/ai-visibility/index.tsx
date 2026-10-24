@@ -15,12 +15,13 @@ export const Route = createFileRoute("/_app/p/$projectId/ai-visibility/")({
   validateSearch: z.object({
     tab: z.enum(tabs).optional().catch(undefined),
   }),
-  loader: ({ params: { projectId } }) => {
-    void queryClient.prefetchQuery(aiTrendQueryOptions(projectId, 7));
+  loaderDeps: ({ search }) => ({ market: search.market }),
+  loader: ({ params: { projectId }, deps: { market } }) => {
+    void queryClient.prefetchQuery(aiTrendQueryOptions(projectId, 7, market));
     // The prompt table reads the latest run's answers, known from a fresh
     // tracker: a cached one can predate the latest run.
     void queryClient
-      .fetchQuery({ ...aiTrackerQueryOptions(projectId), staleTime: 0 })
+      .fetchQuery({ ...aiTrackerQueryOptions(projectId, market), staleTime: 0 })
       .then((state) => {
         const runId = state.recentRuns[0]?.id;
         if (runId)

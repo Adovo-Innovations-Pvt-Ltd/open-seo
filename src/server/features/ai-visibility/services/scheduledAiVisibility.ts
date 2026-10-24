@@ -31,7 +31,7 @@ export async function runScheduledAiVisibility() {
     if (!tracker.nextCheckAt) continue;
     const observedNextCheckAt = tracker.nextCheckAt;
     try {
-      const config = await repo.getConfiguration(tracker.projectId);
+      const config = await repo.getConfiguration(tracker.projectId, tracker.id);
       if (!config) continue;
       const answers =
         activeAiPrompts(config).length * trackerEngines(tracker).length;

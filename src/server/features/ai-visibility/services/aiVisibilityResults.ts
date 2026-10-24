@@ -103,17 +103,31 @@ async function loadAiResultSet(
       "PROMPT_REQUIRED",
       "Provide promptId when requesting answer history.",
     );
+  const tracker = input.promptId
+    ? await repo.getPromptTracker(input.projectId, input.promptId)
+    : await repo.getTracker(input.projectId, input.trackerId);
+  if (input.trackerId && (!tracker || tracker.id !== input.trackerId))
+    throw new AiVisibilityError(
+      "TRACKER_NOT_FOUND",
+      "This market is not available in the selected project.",
+    );
   const runs = await repo.listRuns(
     input.projectId,
     input.includeHistory ? 50 : 20,
+    tracker?.id,
   );
   let run = input.runId
     ? await repo.getRun(input.projectId, input.runId)
-    : await repo.getLatestScheduledRun(input.projectId);
+    : await repo.getLatestScheduledRun(input.projectId, tracker?.id);
   if (input.runId && !run)
     throw new AiVisibilityError(
       "RUN_NOT_FOUND",
       "This run is not available in the selected project.",
+    );
+  if (input.trackerId && run && run.trackerId !== input.trackerId)
+    throw new AiVisibilityError(
+      "RUN_NOT_FOUND",
+      "This run is not available in the selected market.",
     );
   if (input.includeHistory && !input.runId) run = runs[0] ?? null;
   const runIds =

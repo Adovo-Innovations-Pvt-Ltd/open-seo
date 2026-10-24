@@ -199,7 +199,7 @@ export const getAiVisibilityTrackerTool = defineAiTool({
   output: aiTrackerOutput,
   readOnly: true,
   description:
-    "Read AI tracking setup, topics, exact prompts, the project-context brand and competitors that answers are matched against, engine/country capabilities, and recent runs. Returns configured=false when absent. Uses no collection credits; never starts or polls a provider task.",
+    "Read markets and the selected market’s AI tracking setup, topics, exact prompts, the project-context brand and competitors that answers are matched against, engine/country capabilities, and recent runs. Pass trackerId from markets to select a market; omit for the project default. Returns configured=false when absent. Uses no collection credits; never starts or polls a provider task.",
   execute: (s, a) => s.getTracker(a),
   summarize: (d) =>
     d.configured
@@ -218,7 +218,7 @@ export const saveAiVisibilityTrackerTool = defineAiTool({
   }),
   readOnly: false,
   description:
-    "Bulk create or patch AI tracking prompts, their topics, engines, country, and language. Pause or archive a topic by pausing or archiving each of its prompts. Brand name/domain and competitors come from shared Project context; manage them there. Read the tracker first and edit prompts by ID. New trackers start on a weekly schedule; saving uses no credits, and the first paid check runs about a week later. Show the user the estimate before creating a tracker or adding prompts or engines, and pause with set_ai_visibility_schedule if they do not want scheduled checks. Do not rewrite customer prompts without direction.",
+    "Select a market with trackerId to bulk create or patch AI tracking prompts, their topics, engines, country, and language. Pause or archive a topic by pausing or archiving each of its prompts. Brand name/domain and competitors come from shared Project context; manage them there. Read the tracker first and edit prompts by ID. Use createMarket=true with country/language and no trackerId to add a separate, empty, paused market. Existing markets retain their schedules. Legacy initial trackers start on a weekly schedule; saving uses no credits, and the first paid check runs about a week later. Show the user the estimate before creating a tracker or adding prompts or engines, and pause with set_ai_visibility_schedule if they do not want scheduled checks. Do not rewrite customer prompts without direction.",
   execute: (s, a) => s.saveTracker(a),
   summarize: (d) =>
     `Saved AI tracking: ${d.created} created, ${d.updated} updated, ${d.skipped} skipped.`,

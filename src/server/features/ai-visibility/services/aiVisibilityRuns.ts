@@ -191,7 +191,7 @@ export async function runCheck(
   input: RunAiCheckInput,
   billing: BillingCustomerContext,
 ): Promise<AiRun> {
-  const config = await requireConfiguration(input.projectId);
+  const config = await requireConfiguration(input.projectId, input.trackerId);
   const scope = aiScope(config, input.promptIds);
   // Price the check now and refuse it above what the user approved.
   const { costUsd } = aiCostForAnswers(

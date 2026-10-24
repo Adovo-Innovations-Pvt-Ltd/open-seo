@@ -15,6 +15,7 @@ import {
   trackerEngines,
 } from "./aiVisibilityConfiguration";
 import { aiRunView } from "./aiVisibilityResults";
+import { AiVisibilityError } from "./aiVisibilityErrors";
 import { reconcileAiRun } from "./aiVisibilityRuns";
 
 const CONSUMER_NOTE =
@@ -32,16 +33,39 @@ const AI_ENGINE_NOTES: Record<AiEngine, string> = {
 
 export async function getTracker(input: {
   projectId: string;
+  trackerId?: string;
+  promptId?: string;
 }): Promise<AiTrackerState> {
-  const [config, competitors, recent, providerKey, project] = await Promise.all(
-    [
-      repo.getConfiguration(input.projectId),
+  const owner = input.promptId
+    ? await repo.getPromptTracker(input.projectId, input.promptId)
+    : null;
+  if (input.promptId && !owner)
+    throw new AiVisibilityError(
+      "PROMPT_NOT_FOUND",
+      "This prompt is not available in the selected project.",
+    );
+  if (owner && input.trackerId && owner.id !== input.trackerId)
+    throw new AiVisibilityError(
+      "PROMPT_NOT_FOUND",
+      "This prompt is not available in the selected market.",
+    );
+  const trackerId = owner?.id ?? input.trackerId;
+  const [config, competitors, markets, providerKey, project] =
+    await Promise.all([
+      repo.getConfiguration(input.projectId, trackerId),
       repo.listCompetitors(input.projectId),
-      repo.listRuns(input.projectId, 10),
+      repo.listTrackers(input.projectId),
       getOptionalEnvValue("DATAFORSEO_API_KEY"),
       repo.getProject(input.projectId),
-    ],
-  );
+    ]);
+  if (input.trackerId && !config)
+    throw new AiVisibilityError(
+      "TRACKER_NOT_FOUND",
+      "This market is not available in the selected project.",
+    );
+  const recent = config
+    ? await repo.listRuns(input.projectId, 10, config.tracker.id)
+    : [];
   // A run whose workflow stopped is failed here, so it never looks stuck.
   const runs = await Promise.all(recent.map((run) => reconcileAiRun(run)));
   const [observations, answered] = await Promise.all([
@@ -64,6 +88,7 @@ export async function getTracker(input: {
   if (!config)
     return {
       configured: false,
+      markets,
       tracker: null,
       topics: [],
       prompts: [],
@@ -76,6 +101,7 @@ export async function getTracker(input: {
   const { tracker } = config;
   return {
     configured: true,
+    markets,
     tracker: {
       id: tracker.id,
       projectId: tracker.projectId,

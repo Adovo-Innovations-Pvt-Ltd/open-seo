@@ -1,10 +1,17 @@
 import { and, desc, eq, gt, inArray, notInArray, sql } from "drizzle-orm";
 import { reverse } from "remeda";
 import { db } from "@/db";
+import { getTracker } from "./aiVisibilityConfigurationRepository";
 import { aiMatches, aiObservations, aiRuns } from "@/db/schema";
 
 /** Finished runs from every trigger created after `since`, oldest first. */
-export async function listTrendRuns(projectId: string, since: string) {
+export async function listTrendRuns(
+  projectId: string,
+  since: string,
+  trackerId?: string,
+) {
+  const selected = await getTracker(projectId, trackerId);
+  if (!selected) return [];
   // Keep the newest runs if the cap is ever reached.
   const runs = await db
     .select()
@@ -12,6 +19,7 @@ export async function listTrendRuns(projectId: string, since: string) {
     .where(
       and(
         eq(aiRuns.projectId, projectId),
+        eq(aiRuns.trackerId, selected.id),
         notInArray(aiRuns.status, ["queued", "running"]),
         gt(aiRuns.createdAt, since),
       ),

@@ -135,12 +135,12 @@ export function projectAiConfiguration(input: {
   if (unarchived.length > PROMPT_LIMIT)
     throw new AiVisibilityError(
       "PROMPT_LIMIT",
-      "Tracking supports up to 100 unarchived prompts per project. Archive unused prompts first.",
+      "Tracking supports up to 100 unarchived prompts per market. Archive unused prompts first.",
     );
   if (new Set(unarchived.map((p) => p.topic)).size > TOPIC_LIMIT)
     throw new AiVisibilityError(
       "TOPIC_LIMIT",
-      "Tracking supports up to 30 topics per project. Archive the prompts of an unused topic first.",
+      "Tracking supports up to 30 topics per market. Archive the prompts of an unused topic first.",
     );
   return { rows, ...counts };
 }

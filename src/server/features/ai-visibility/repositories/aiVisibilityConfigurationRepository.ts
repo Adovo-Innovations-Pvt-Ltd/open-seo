@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull, getTableColumns, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { runBatch } from "@/db/runBatch";
 import { normalizeAiSuggestion } from "@/shared/ai-prompt-suggestions";
@@ -15,13 +15,48 @@ export interface ConfigurationRows {
   prompts: PromptRow[];
 }
 
-export async function getTracker(projectId: string) {
+export async function listTrackers(projectId: string) {
+  return db
+    .select(getTableColumns(aiTrackers))
+    .from(aiTrackers)
+    .innerJoin(projects, eq(aiTrackers.projectId, projects.id))
+    .where(eq(aiTrackers.projectId, projectId))
+    .orderBy(
+      sql`CASE WHEN ${aiTrackers.locationCode} = ${projects.locationCode} AND ${aiTrackers.languageCode} = ${projects.languageCode} THEN 0 ELSE 1 END`,
+      asc(aiTrackers.createdAt),
+      asc(aiTrackers.id),
+    );
+}
+
+export async function getTracker(projectId: string, trackerId?: string) {
+  if (!trackerId) return (await listTrackers(projectId))[0] ?? null;
   return (
     (
       await db
         .select()
         .from(aiTrackers)
-        .where(eq(aiTrackers.projectId, projectId))
+        .where(
+          and(
+            eq(aiTrackers.projectId, projectId),
+            eq(aiTrackers.id, trackerId),
+          ),
+        )
+        .limit(1)
+    )[0] ?? null
+  );
+}
+
+/** Authorize a historical prompt through its owning market and project. */
+export async function getPromptTracker(projectId: string, promptId: string) {
+  return (
+    (
+      await db
+        .select(getTableColumns(aiTrackers))
+        .from(aiTrackers)
+        .innerJoin(aiPrompts, eq(aiPrompts.trackerId, aiTrackers.id))
+        .where(
+          and(eq(aiTrackers.projectId, projectId), eq(aiPrompts.id, promptId)),
+        )
         .limit(1)
     )[0] ?? null
   );
@@ -29,8 +64,9 @@ export async function getTracker(projectId: string) {
 
 export async function getConfiguration(
   projectId: string,
+  trackerId?: string,
 ): Promise<ConfigurationRows | null> {
-  const tracker = await getTracker(projectId);
+  const tracker = await getTracker(projectId, trackerId);
   if (!tracker) return null;
   const prompts = await db
     .select()

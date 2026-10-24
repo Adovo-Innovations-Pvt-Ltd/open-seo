@@ -24,7 +24,7 @@ export function PromptHistoryPage({
   promptId: string;
 }) {
   const queryClient = useQueryClient();
-  const trackerQuery = useAiVisibilityTracker(projectId);
+  const trackerQuery = useAiVisibilityTracker(projectId, promptId);
   const [checking, setChecking] = useState(false);
   const [startedRun, setStartedRun] = useState<AiRun | null>(null);
   const progress = useAiRunProgress(projectId, startedRun);
@@ -49,7 +49,11 @@ export function PromptHistoryPage({
     <div className="space-y-4">
       <PageHeader
         backLink={
-          <BackLink to="/p/$projectId/ai-visibility" params={{ projectId }}>
+          <BackLink
+            to="/p/$projectId/ai-visibility"
+            params={{ projectId }}
+            search={{ market: state?.tracker?.id }}
+          >
             All tracked prompts
           </BackLink>
         }

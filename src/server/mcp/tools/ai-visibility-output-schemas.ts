@@ -23,6 +23,21 @@ export const aiRunOutput = z.looseObject({
   pollAfterSeconds: count,
 });
 export const aiTrackerOutput = z.looseObject({
+  markets: z
+    .array(
+      z.looseObject({
+        id: text,
+        projectId: text,
+        enabled: flag,
+        locationCode: count,
+        languageCode: text,
+        scheduleInterval: text,
+        nextCheckAt: nullableText,
+        lastSkipReason: nullableText,
+        createdAt: text,
+      }),
+    )
+    .optional(),
   configured: flag,
   providerConfigured: flag,
   tracker: z

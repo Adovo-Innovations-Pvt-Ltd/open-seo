@@ -60,7 +60,12 @@ export function aiCostForAnswers(
 export async function estimateCost(
   input: EstimateAiCostInput,
 ): Promise<AiCostEstimate> {
-  const current = await repo.getConfiguration(input.projectId);
+  const current = await repo.getConfiguration(input.projectId, input.trackerId);
+  if (input.trackerId && !current)
+    throw new AiVisibilityError(
+      "TRACKER_NOT_FOUND",
+      "This market is not available in the selected project.",
+    );
   const config = input.patch
     ? (await projectPatch(input.projectId, input.patch, current)).rows
     : current;

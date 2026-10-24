@@ -41,9 +41,10 @@ export function PromptTrackingTabs({
               params: { projectId },
               // Like other tabbed pages, Back leaves the page.
               replace: true,
-              search: {
+              search: (prev) => ({
+                market: prev.market,
                 tab: next.value === "prompts" ? undefined : next.value,
-              },
+              }),
             });
         }}
       >

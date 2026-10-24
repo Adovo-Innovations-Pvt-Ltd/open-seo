@@ -172,7 +172,7 @@ export async function loadAiTrend(input: AiTrendInput): Promise<AiTrend> {
   const end = Date.now();
   const split = new Date(end - input.days * DAY_MS).toISOString();
   const start = new Date(end - 2 * input.days * DAY_MS).toISOString();
-  const runs = await listTrendRuns(input.projectId, start);
+  const runs = await listTrendRuns(input.projectId, start, input.trackerId);
   const rowsByRun = groupByProp(
     await getTrendObservations(runs.map((run) => run.id)),
     "runId",

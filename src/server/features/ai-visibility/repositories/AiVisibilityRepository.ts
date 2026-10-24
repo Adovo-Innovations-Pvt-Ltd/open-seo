@@ -13,6 +13,8 @@ import {
 } from "@/db/schema";
 import {
   getTracker,
+  listTrackers,
+  getPromptTracker,
   getConfiguration,
   saveConfiguration,
   type ObservationRow,
@@ -61,11 +63,16 @@ async function getRunInternal(runId: string) {
   );
 }
 
-async function listRuns(projectId: string, limit = 20) {
+async function listRuns(projectId: string, limit = 20, trackerId?: string) {
   return db
     .select()
     .from(aiRuns)
-    .where(eq(aiRuns.projectId, projectId))
+    .where(
+      and(
+        eq(aiRuns.projectId, projectId),
+        trackerId ? eq(aiRuns.trackerId, trackerId) : undefined,
+      ),
+    )
     .orderBy(desc(aiRuns.createdAt), desc(aiRuns.id))
     .limit(limit);
 }
@@ -255,6 +262,8 @@ export const AiVisibilityRepository = {
       .split("\n")
       .filter(Boolean),
   getTracker,
+  listTrackers,
+  getPromptTracker,
   getConfiguration,
   saveConfiguration,
   updateTracker: (id: string, values: Partial<TrackerRow>) =>
@@ -280,13 +289,17 @@ export const AiVisibilityRepository = {
   getRunInternal,
   listRuns,
   getActiveRun,
-  getLatestScheduledRun: async (projectId: string) =>
+  getLatestScheduledRun: async (projectId: string, trackerId?: string) =>
     (
       await db
         .select()
         .from(aiRuns)
         .where(
-          and(eq(aiRuns.projectId, projectId), ne(aiRuns.trigger, "manual")),
+          and(
+            eq(aiRuns.projectId, projectId),
+            ne(aiRuns.trigger, "manual"),
+            trackerId ? eq(aiRuns.trackerId, trackerId) : undefined,
+          ),
         )
         .orderBy(desc(aiRuns.createdAt), desc(aiRuns.id))
         .limit(1)

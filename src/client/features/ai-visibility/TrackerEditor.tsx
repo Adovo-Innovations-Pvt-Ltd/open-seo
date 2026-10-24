@@ -90,6 +90,7 @@ export function TrackerEditor({
         // An unscheduled tracker is offered weekly tracking.
         data: {
           projectId,
+          trackerId: state.tracker?.id,
           patch,
           scheduleInterval: state.tracker?.enabled ? undefined : "weekly",
         },
@@ -97,7 +98,11 @@ export function TrackerEditor({
     }),
     onSuccess: setReview,
   });
-  const save = useTrackerSetupSave({ projectId, onSaved });
+  const save = useTrackerSetupSave({
+    projectId,
+    trackerId: state.tracker?.id,
+    onSaved,
+  });
   const form = useForm({
     defaultValues: { draft: defaultDraft },
     onSubmit: ({ value: { draft } }) => {

@@ -47,12 +47,14 @@ function notice(trend: AiTrend, collecting: boolean) {
 export function VisibilityTrend({
   projectId,
   collecting,
+  trackerId,
 }: {
   projectId: string;
   collecting: boolean;
+  trackerId?: string;
 }) {
   const [days, setDays] = useState<AiTrendDays>(7);
-  const query = useQuery(aiTrendQueryOptions(projectId, days));
+  const query = useQuery(aiTrendQueryOptions(projectId, days, trackerId));
   const trend = query.data;
   const message = trend && notice(trend, collecting);
   // Incomplete collection and a changed scope need attention; missing history does not.

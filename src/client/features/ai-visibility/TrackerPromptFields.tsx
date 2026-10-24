@@ -38,6 +38,7 @@ export function TrackerPromptFields({
       generateAiVisibilityPrompts({
         data: {
           projectId,
+          trackerId: state.tracker?.id,
           topic: group.name.trim() || undefined,
           excludePrompts: group.prompts,
           locationCode: value.locationCode,

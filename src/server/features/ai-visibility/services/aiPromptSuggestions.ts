@@ -38,10 +38,11 @@ export async function generateAiPrompts(
       "Set your project's website before generating prompts.",
     );
   const [config, sections, competitors] = await Promise.all([
-    repo.getConfiguration(input.projectId),
+    repo.getConfiguration(input.projectId, input.trackerId),
     ProjectContextRepository.listSections(input.projectId),
     ProjectContextRepository.listCompetitors(input.projectId),
   ]);
+  if (input.trackerId && !config) throw new AppError("NOT_FOUND");
   const topics = config ? aiTopics(config) : [];
   const unarchived = config?.prompts.filter((prompt) => !prompt.archived) ?? [];
   // A typed name matching a saved topic adds to that topic.
@@ -115,7 +116,7 @@ export async function generateAiPrompts(
   const generated = outputSchema.parse(result.output);
   const name = topicName || (sameTopic(generated.name) ?? generated.name);
   // Read again after generation so suggestions also exclude concurrent saves.
-  const latest = await repo.getConfiguration(input.projectId);
+  const latest = await repo.getConfiguration(input.projectId, input.trackerId);
   const excluded = new Set(
     [
       ...(latest?.prompts.map((prompt) => prompt.text) ?? []),

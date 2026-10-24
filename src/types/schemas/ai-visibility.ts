@@ -8,7 +8,23 @@ export const aiEngineSchema = z.enum([
   "claude",
   "perplexity",
 ]);
-export const aiProjectSchema = z.object({ projectId: z.string().uuid() });
+export const aiProjectSchema = z.object({
+  projectId: z.string().uuid(),
+  trackerId: z
+    .string()
+    .uuid()
+    .optional()
+    .describe(
+      "Market tracker ID from get_ai_visibility_tracker.markets. Omit for the project’s default market. Always belongs to projectId.",
+    ),
+});
+export const aiTrackerQuerySchema = aiProjectSchema.extend({
+  promptId: z
+    .string()
+    .uuid()
+    .optional()
+    .describe("Resolve the owning market of a saved prompt in this project."),
+});
 const topicSchema = z.string().trim().min(1).max(100);
 const scheduleIntervalSchema = z
   .enum(["daily", "weekly", "monthly"])
@@ -67,9 +83,15 @@ export const aiTrackerPatchSchema = z.object({
     .optional(),
   archivePromptIds: z.array(z.string().uuid()).max(100).optional(),
 });
-export const saveAiTrackerSchema = aiProjectSchema.extend(
-  aiTrackerPatchSchema.shape,
-);
+export const saveAiTrackerSchema = aiProjectSchema.extend({
+  ...aiTrackerPatchSchema.shape,
+  createMarket: z
+    .boolean()
+    .optional()
+    .describe(
+      "Create a separate paused market tracker using locationCode and languageCode. Uses no collection credits; never changes an existing market or schedule.",
+    ),
+});
 export const estimateAiCostSchema = aiProjectSchema.extend({
   scheduleInterval: scheduleIntervalSchema
     .optional()

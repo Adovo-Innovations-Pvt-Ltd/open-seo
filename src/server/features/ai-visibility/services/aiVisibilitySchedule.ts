@@ -22,7 +22,7 @@ export async function setSchedule(
   state: Awaited<ReturnType<typeof getTracker>>;
   run: AiRun | null;
 }> {
-  const config = await requireConfiguration(input.projectId);
+  const config = await requireConfiguration(input.projectId, input.trackerId);
   const { tracker } = config;
   if (!input.enabled) {
     await repo.updateTracker(tracker.id, { enabled: false });
@@ -53,7 +53,7 @@ export async function setSchedule(
     lastSkipReason: null,
   });
   let run: AiRun | null = null;
-  if (!(await repo.getLatestScheduledRun(input.projectId))) {
+  if (!(await repo.getLatestScheduledRun(input.projectId, config.tracker.id))) {
     try {
       run = await startRun(config, "baseline", billing);
     } catch (error) {

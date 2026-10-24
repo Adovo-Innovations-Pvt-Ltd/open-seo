@@ -91,6 +91,8 @@ export interface AiRun {
   pollAfterSeconds: number;
 }
 export interface AiTrackerState {
+  /** Independent market trackers in this project, each retaining its own prompts and schedule. */
+  markets?: AiTracker[];
   configured: boolean;
   tracker: AiTracker | null;
   /** Topics of unarchived prompts, in name order. */

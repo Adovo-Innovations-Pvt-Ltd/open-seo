@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useSearch } from "@tanstack/react-router";
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { QueryError } from "@/client/components/QueryState";
@@ -25,12 +25,26 @@ export const aiVisibilityKey = (projectId: string) => [
 const isRunPending = (run: AiRun | null | undefined) =>
   run?.status === "running" || run?.status === "queued";
 
-export const aiTrackerQueryOptions = (projectId: string) =>
+export function useSelectedAiMarket() {
+  return useSearch({ from: "/_app/p/$projectId/ai-visibility" }).market;
+}
+
+export const aiTrackerQueryOptions = (
+  projectId: string,
+  trackerId?: string,
+  promptId?: string,
+) =>
   queryOptions({
-    queryKey: [...aiVisibilityKey(projectId), "tracker"],
+    queryKey: [
+      ...aiVisibilityKey(projectId),
+      "tracker",
+      ...(trackerId || promptId ? [trackerId, promptId] : []),
+    ],
     queryFn: async ({ client, queryKey }) => {
       const before = client.getQueryData<AiTrackerState>(queryKey);
-      const state = await getAiVisibilityTracker({ data: { projectId } });
+      const state = await getAiVisibilityTracker({
+        data: { projectId, trackerId, promptId },
+      });
       // Answers, trend and sources read while a run was collecting are
       // incomplete, wherever they were read (a hover preload, another tab), so
       // the read that first sees the run finish refreshes them.
@@ -72,10 +86,21 @@ export const aiResearchKeywordsQueryOptions = (projectId: string) =>
 
 export type AiTrendDays = 7 | 28 | 90;
 
-export const aiTrendQueryOptions = (projectId: string, days: AiTrendDays) =>
+export const aiTrendQueryOptions = (
+  projectId: string,
+  days: AiTrendDays,
+  trackerId?: string,
+) =>
   queryOptions({
-    queryKey: [...aiVisibilityKey(projectId), "results", "trend", days],
-    queryFn: () => getAiVisibilityTrend({ data: { projectId, days } }),
+    queryKey: [
+      ...aiVisibilityKey(projectId),
+      "results",
+      "trend",
+      days,
+      trackerId,
+    ],
+    queryFn: () =>
+      getAiVisibilityTrend({ data: { projectId, days, trackerId } }),
   });
 
 /** Every answer in a run, so each prompt can show its per-engine result. */
@@ -108,8 +133,15 @@ export const aiPromptHistoryQueryOptions = (
       }),
   });
 
-export function useAiVisibilityTracker(projectId: string) {
-  return useQuery(aiTrackerQueryOptions(projectId));
+export function useAiVisibilityTracker(projectId: string, promptId?: string) {
+  const trackerId = useSelectedAiMarket();
+  return useQuery(
+    aiTrackerQueryOptions(
+      projectId,
+      promptId ? undefined : trackerId,
+      promptId,
+    ),
+  );
 }
 
 export function useAiRunProgress(projectId: string, initialRun: AiRun | null) {

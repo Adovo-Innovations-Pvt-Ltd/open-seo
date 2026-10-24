@@ -48,6 +48,10 @@ async function dueTracker(projectId: string, paused: boolean) {
 
 beforeEach(async () => {
   hosted.mockResolvedValue(false);
+  workflow.get.mockResolvedValue({
+    status: async () => ({ status: "queued" }),
+  });
+  workflow.create.mockResolvedValue({});
   await testDb.seedProject();
   await testDb.db.insert(projects).values({
     id: "paused-project",
@@ -82,4 +86,44 @@ it("records a skipped check for credits on the tracker without starting it", asy
     "INSUFFICIENT_CREDITS",
   );
   expect(await repo.listRuns("project")).toEqual([]);
+});
+
+it("starts every due market with that market's exact prompts and collection settings", async () => {
+  const markets = [2840, 2826, 2784, 2356];
+  for (const locationCode of markets) {
+    const rows = configuration({
+      locationCode,
+      languageCode: "en",
+      engines: ["chatgpt", "gemini", "google_ai_overview"],
+      prompts: [{ text: `Question for ${locationCode}?` }],
+    });
+    await repo.saveConfiguration(rows);
+    await repo.updateTracker(rows.tracker.id, {
+      enabled: true,
+      nextCheckAt: due,
+    });
+  }
+  await runScheduledAiVisibility();
+  const runs = await repo.listRuns("project");
+  expect(runs).toHaveLength(4);
+  expect(runs.map((run) => run.locationCode)).toEqual(
+    expect.arrayContaining(markets),
+  );
+  for (const run of runs) {
+    expect(run).toMatchObject({
+      trigger: "scheduled",
+      languageCode: "en",
+      status: "queued",
+    });
+    const observations = await repo.getObservations([run.id]);
+    expect(observations).toHaveLength(3);
+    expect(
+      observations.every(
+        (row) => row.prompt === `Question for ${run.locationCode}?`,
+      ),
+    ).toBe(true);
+    const tracker = await repo.getTracker("project", run.trackerId);
+    expect(tracker?.nextCheckAt).not.toBe(due);
+    expect(tracker?.lastSkipReason).toBeNull();
+  }
 });

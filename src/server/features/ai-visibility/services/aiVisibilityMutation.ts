@@ -6,8 +6,11 @@ import { AiVisibilityError } from "./aiVisibilityErrors";
 import type { AiTrackerPatch } from "@/types/schemas/ai-visibility";
 import { projectAiConfiguration } from "./aiVisibilityConfiguration";
 
-export async function requireConfiguration(projectId: string) {
-  const config = await repo.getConfiguration(projectId);
+export async function requireConfiguration(
+  projectId: string,
+  trackerId?: string,
+) {
+  const config = await repo.getConfiguration(projectId, trackerId);
   if (!config)
     throw new AiVisibilityError(
       "TRACKER_REQUIRED",

@@ -8,7 +8,7 @@ import {
 } from "drizzle-orm/sqlite-core";
 import { projects } from "./app.schema";
 
-// One tracker per project. Brand name, domain and competitors come from the
+// One tracker per project market. Brand name, domain and competitors come from the
 // project and its competitors when each answer is matched.
 export const aiTrackers = sqliteTable(
   "ai_trackers",
@@ -39,7 +39,11 @@ export const aiTrackers = sqliteTable(
     createdAt: text("created_at").notNull(),
   },
   (t) => [
-    uniqueIndex("ai_trackers_project_idx").on(t.projectId),
+    uniqueIndex("ai_trackers_project_market_idx").on(
+      t.projectId,
+      t.locationCode,
+      t.languageCode,
+    ),
     index("ai_trackers_due_idx").on(t.enabled, t.nextCheckAt),
   ],
 );

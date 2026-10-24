@@ -34,11 +34,13 @@ import { AiLoading, AiQueryError, aiMoney, aiVisibilityKey } from "./shared";
 
 const costEstimateQueryOptions = ({
   projectId,
+  trackerId,
   mode,
   scheduleInterval,
   promptIds,
 }: {
   projectId: string;
+  trackerId?: string;
   mode: "check" | "schedule";
   scheduleInterval: AiScheduleInterval;
   promptIds?: string[];
@@ -47,6 +49,7 @@ const costEstimateQueryOptions = ({
     queryKey: [
       ...aiVisibilityKey(projectId),
       "estimate",
+      trackerId,
       mode,
       scheduleInterval,
       promptIds,
@@ -55,6 +58,7 @@ const costEstimateQueryOptions = ({
       estimateAiVisibilityCost({
         data: {
           projectId,
+          trackerId,
           promptIds,
           scheduleInterval: mode === "schedule" ? scheduleInterval : undefined,
         },
@@ -76,6 +80,7 @@ export function prefetchRunNowCost(
   void queryClient.prefetchQuery(
     costEstimateQueryOptions({
       projectId,
+      trackerId: tracker.id,
       mode: "check",
       scheduleInterval: tracker.scheduleInterval,
       promptIds,
@@ -113,6 +118,7 @@ export function TrackingCostReview({
   const estimate = useQuery({
     ...costEstimateQueryOptions({
       projectId,
+      trackerId: tracker.id,
       mode,
       scheduleInterval,
       promptIds,
@@ -130,6 +136,7 @@ export function TrackingCostReview({
         const result = await setAiVisibilitySchedule({
           data: {
             projectId,
+            trackerId: tracker.id,
             enabled: true,
             scheduleInterval,
             // An unchanged schedule keeps its next check.
@@ -146,6 +153,7 @@ export function TrackingCostReview({
       return runAiVisibilityCheck({
         data: {
           projectId,
+          trackerId: tracker.id,
           maxCostUsd: cost.runNowCostUsd,
           promptIds,
         },

@@ -40,8 +40,16 @@ export function TrackerPatchReview({
   onSaved: (state: AiTrackerState) => void;
 }) {
   const estimate = useQuery({
-    queryKey: [...aiVisibilityKey(projectId), "changeEstimate", patch],
-    queryFn: () => estimateAiVisibilityCost({ data: { projectId, patch } }),
+    queryKey: [
+      ...aiVisibilityKey(projectId),
+      "changeEstimate",
+      state.tracker?.id,
+      patch,
+    ],
+    queryFn: () =>
+      estimateAiVisibilityCost({
+        data: { projectId, trackerId: state.tracker?.id, patch },
+      }),
     enabled: Boolean(state.tracker?.enabled),
     staleTime: 0,
     gcTime: 0,
@@ -54,7 +62,9 @@ export function TrackerPatchReview({
   });
   const save = useMutation({
     mutationFn: () =>
-      saveAiVisibilityTracker({ data: { projectId, ...patch } }),
+      saveAiVisibilityTracker({
+        data: { projectId, trackerId: state.tracker?.id, ...patch },
+      }),
     onSuccess: (result) => onSaved(result.state),
   });
   const needsEstimate = state.tracker?.enabled;

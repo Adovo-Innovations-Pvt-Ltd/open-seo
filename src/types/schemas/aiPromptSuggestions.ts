@@ -15,6 +15,7 @@ export const suggestedAiTopicSchema = z.object({
 });
 export const generateAiPromptsSchema = z.object({
   projectId: z.string().uuid(),
+  trackerId: z.string().uuid().optional(),
   topic: z
     .string()
     .trim()
