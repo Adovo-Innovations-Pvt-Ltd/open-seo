@@ -141,6 +141,18 @@ export function getProjectNavGroups(projectId: string) {
       ],
     },
     {
+      label: "AI Intelligence",
+      items: linkOptions([
+        {
+          to: "/p/$projectId/intelligence",
+          params: { projectId },
+          search: {},
+          label: "Analytics dashboard",
+          icon: ChartLine,
+        },
+      ]),
+    },
+    {
       label: "My Site",
       items: [
         byPath("/p/$projectId/search-performance"),

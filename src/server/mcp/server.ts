@@ -1,3 +1,4 @@
+import { getSavedAnswerAnalyticsTool } from "@/server/mcp/tools/ai-saved-answer-analytics-tools";
 import {
   getAiVisibilityTrackerTool,
   generateAiVisibilityPromptsTool,
@@ -253,6 +254,7 @@ export function createOpenSeoMcpServer(
   register(getSerpResultsTool);
   register(searchSerpLocationsTool);
   register(getAiVisibilityTrackerTool);
+  register(getSavedAnswerAnalyticsTool);
   register(explorePromptTool);
   register(generateAiVisibilityPromptsTool);
   register(researchAiVisibilityPromptsTool);
